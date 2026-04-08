@@ -1,0 +1,107 @@
+name: task_scheduler_env
+display_name: "Sprint Task Scheduler"
+version: "1.0.0"
+
+description: >
+  A real-world sprint-planning environment where an AI agent must schedule
+  software development tasks across team members in a sprint, respecting
+  dependencies, deadlines, skill requirements, and capacity constraints.
+  Models a genuine workplace challenge faced by engineering managers and
+  scrum masters every sprint.
+
+tags:
+  - openenv
+  - scheduling
+  - project-management
+  - sprint-planning
+
+actions:
+  type: object
+  description: >
+    JSON object with action_type (assign | defer | finish), plus optional
+    task_id, developer_id, and scheduled_day fields.
+  properties:
+    action_type:
+      type: string
+      enum: ["assign", "defer", "finish"]
+      description: "The type of scheduling action to take."
+    task_id:
+      type: string
+      description: "ID of the task to assign or defer (e.g. 'T1')."
+    developer_id:
+      type: string
+      description: "ID of the developer to assign to (e.g. 'D1')."
+    scheduled_day:
+      type: integer
+      description: "Sprint day to schedule the task on (1-based)."
+
+observations:
+  type: object
+  description: >
+    Complete sprint state: task list with statuses, developer roster with
+    skill sets, schedule grid (day × developer → tasks), per-developer
+    load per day, and feedback messages from the last action.
+  properties:
+    tasks:
+      type: array
+      description: "All tasks with id, title, priority, estimated_hours, deadline_day, required_skill, dependencies, status, assigned_to, scheduled_day, business_value."
+    developers:
+      type: array
+      description: "Available developers with id, name, skills, hours_per_day."
+    schedule:
+      type: object
+      description: "Day → Developer → [task_ids] mapping."
+    developer_load:
+      type: object
+      description: "Developer → Day → hours_used mapping."
+    messages:
+      type: array
+      description: "Feedback messages from the last action."
+    current_step:
+      type: integer
+    max_steps:
+      type: integer
+    sprint_days:
+      type: integer
+
+reward:
+  type: object
+  description: >
+    Scalar reward in [-1, 1] with a per-component breakdown dict.
+    Partial credit for each correct assignment; penalties for constraint
+    violations (skill mismatch, overload, dependency/deadline violations);
+    bonus on episode completion proportional to overall schedule quality.
+  properties:
+    value:
+      type: number
+      description: "Scalar reward clipped to [-1, 1]."
+    breakdown:
+      type: object
+      description: "Per-component reward breakdown."
+
+tasks:
+  - name: easy
+    display_name: "Basic Sprint Planning"
+    description: "Schedule 5 independent tasks across 2 developers. No dependencies, generous deadlines."
+    difficulty: easy
+
+  - name: medium
+    display_name: "Backend Bottleneck with Dependencies"
+    description: "Schedule 10 tasks with dependency chains across 3 developers. Backend bottleneck with anti-greedy trap."
+    difficulty: medium
+
+  - name: hard
+    display_name: "Sprint Optimisation Under Constraints"
+    description: "Optimise 15 tasks across 4 developers with severe backend bottleneck, anti-greedy traps, and cascading failures. Must defer strategically."
+    difficulty: hard
+
+endpoints:
+  reset: "POST /reset"
+  step: "POST /step"
+  state: "GET /state"
+  health: "GET /health"
+  schema: "GET /schema"
+  metadata: "GET /metadata"
+  websocket: "WS /ws"
+  tasks: "GET /tasks"
+  grade: "POST /grade"
