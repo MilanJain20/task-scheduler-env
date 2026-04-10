@@ -1,7 +1,7 @@
 """
 Graders for the Sprint Task Scheduler Environment
 ===================================================
-Each grader returns a deterministic score in [0.0, 1.0].
+Each grader returns a deterministic score in (0, 1) exclusive.
 Grading criteria increase in sophistication from easy → hard.
 """
 
@@ -21,7 +21,7 @@ def grade(task_name: str, env: "TaskSchedulerEnv") -> float:
     """
     Grade the current environment state for the given task.
 
-    Returns a float in [0.0, 1.0].
+    Returns a float strictly in (0, 1) — never exactly 0.0 or 1.0.
     """
     graders = {
         "easy": _grade_easy,
@@ -31,7 +31,10 @@ def grade(task_name: str, env: "TaskSchedulerEnv") -> float:
     fn = graders.get(task_name)
     if fn is None:
         raise ValueError(f"Unknown task '{task_name}'. Choose from: {list(graders)}")
-    return round(max(0.0, min(1.0, fn(env))), 4)
+    # Clamp to strictly within (0, 1) — neither 0.0 nor 1.0 are allowed.
+    EPS = 1e-4
+    raw = fn(env)
+    return round(max(EPS, min(1.0 - EPS, raw)), 4)
 
 
 # ──────────────────────────────────────────────────────────────
